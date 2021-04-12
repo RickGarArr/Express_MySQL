@@ -1,55 +1,87 @@
+import { PoolConnection } from 'mysql';
 import Usuario from '../dominio/Usuario';
-import { queryPromise } from '../helpers/mysql.promisify';
+import { insertPromise, queryPromise } from '../helpers/mysql.promisify';
 import { IUsuario } from '../interfaces/IDominio';
 import Conexion from '../server_classes/Conexion';
 
 export default class UsuarioAccess {
+    
+    private conexionTransaccional?: PoolConnection;
+    
+    private readonly SELECT_ALL_BY_TYPE: string = 'SELECT * FROM usuarios WHERE tipo = ?';
+    private readonly INSERT_USUARIO: string = 'INSERT INTO usuarios (id_usuario, email, telefono, password, fecha_creacion, tipo) VALUES (?,?,?,?,?,?)';
 
-    private static readonly SELECT_ALL: string = 'SELECT * FROM usuarios';
-    private static readonly SELECT_ALL_BY_TYPE: string = 'SELECT * FROM usuarios WHERE tipo = ?';
-    private static readonly INSERT_ADMIN: string = 'INSERT INTO usuarios (id_usuario, email, telefono, password, fecha_creacion, tipo) VALUES (?,?,?,?,?,?)';
-    private static readonly SELECT_BY_EMAIL: string = 'SELECT * FROM usuarios WHERE email = ?';
+    constructor(conexion?: PoolConnection) {
+        this.conexionTransaccional = conexion;
+    }
 
-    static create(usuario: Usuario): Promise<IInsertResult> {
+    public create(usuario: Usuario): Promise<IInsertResult> {
         return new Promise( async (resolve, reject) => {
             const { id_usuario, email, telefono, password, fecha_creacion, tipo } = usuario;
+            let conexion: PoolConnection;
             try {
-                const conexion = await Conexion.getConexion();
-                const insert = conexion.format(this.INSERT_ADMIN, [id_usuario, email, telefono, password, fecha_creacion, tipo]);
-                const result = await queryPromise(conexion, insert);
-                resolve(result as IInsertResult);
-                conexion.release();
+                !this.conexionTransaccional ? conexion = await Conexion.getConexion() : conexion = this.conexionTransaccional;
+                const insert = conexion.format(this.INSERT_USUARIO, [id_usuario, email, telefono, password, fecha_creacion, tipo]);
+                const result = await insertPromise(conexion, insert);
+                resolve(result);
             } catch (error) {
                 reject(error);
+            } finally {
+                if (!this.conexionTransaccional) {
+                    conexion!.release();
+                }
             }
         });
     }
     
-    static getAllUsersByType(tipo: string): Promise<Usuario[]> {
+    public getUsersByType(tipo: string): Promise<Usuario[]> {
         return new Promise( async (resolve, reject) => {
+            let conexion: PoolConnection;
             try{
-                const conexion = await Conexion.getConexion();
+                !this.conexionTransaccional ? conexion = await Conexion.getConexion() : conexion = this.conexionTransaccional;
                 const sql = conexion.format(this.SELECT_ALL_BY_TYPE, [tipo]);
                 const result = await queryPromise(conexion, sql);   
                 resolve(result as Usuario[]);
-                conexion.release();
             } catch (err) {
                 reject(err);
+            } finally {
+                if(!this.conexionTransaccional) {
+                    conexion!.release();
+                }
             }
         });
     }
 
-    static getUserByEmail(email: string): Promise<IUsuario> {
-        return new Promise<IUsuario>( async (resolve, reject) => {
+    public getOneUser(params: IUsuario): Promise<Usuario> {
+        return new Promise<Usuario>( async (resolve, reject) => {
+            let conexion: PoolConnection;
             try {
-                const conexion = await Conexion.getConexion();
-                const sql = conexion.format(this.SELECT_BY_EMAIL, [email]);
-                const result = await queryPromise(conexion, sql);
+                !this.conexionTransaccional ? conexion = await Conexion.getConexion() : conexion = this.conexionTransaccional;
+                let query = 'SELECT * FROM usuarios WHERE ';
+                Object.entries(params).forEach( ([key, value], index) => {
+                    if ( index > 0) {
+                        if (isNaN(value)) {
+                            query += ` AND ${key} = '${value}'`;
+                        } else {
+                            query += ` AND ${key} = ${value}`;
+                        }
+                    } else {
+                        if (isNaN(value)) {
+                            query += `${key} = '${value}'`;
+                        } else {
+                            query += `${key} = ${value}`;
+                        }
+                    }
+                });
+                const result = await queryPromise(conexion, query);
                 const usuario = (result as Usuario[])[0];
-                resolve(usuario as IUsuario);
-                conexion.release();
+                resolve(usuario);
             } catch (err) {
                 reject(err);
+            } finally {
+                if (!this.conexionTransaccional) {
+                    conexion!.release();
+                }
             }
         });
     }
