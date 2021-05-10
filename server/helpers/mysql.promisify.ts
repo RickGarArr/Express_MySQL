@@ -1,8 +1,17 @@
-import { PoolConnection } from "mysql";
+import { PoolConnection, QueryOptions } from "mysql";
 
 export function queryPromise(conexion: PoolConnection, query: string) {
     return new Promise((resolve, reject) => {
         conexion.query(query, (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+        });
+    });
+}
+
+export function queryOptionsPromise(conexion: PoolConnection, queryOptions: QueryOptions) {
+    return new Promise((resolve, reject) => {
+        conexion.query(queryOptions,(err, result) => {
             if (err) reject(err);
             resolve(result);
         });

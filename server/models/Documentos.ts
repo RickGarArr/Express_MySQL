@@ -1,4 +1,4 @@
-import { IDocumentos } from "../interfaces/IDominio";
+import { IDocumentos } from "../interfaces/IModels";
 
 export default class Documentos implements IDocumentos {
     public id_documentos?: number;

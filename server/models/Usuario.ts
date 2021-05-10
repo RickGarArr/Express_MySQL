@@ -1,4 +1,4 @@
-import { IUsuario } from "../interfaces/IDominio";
+import { IUsuario } from "../interfaces/IModels";
 
 export default class Usuario implements IUsuario {
     

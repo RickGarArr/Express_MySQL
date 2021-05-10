@@ -1,12 +1,13 @@
 import { PoolConnection } from 'mysql';
 import { insertPromise, queryPromise } from '../helpers/mysql.promisify';
-import { IDocumentos } from '../interfaces/IDominio';
-import Conexion from '../server_classes/Conexion';
+import { IDocumentos } from '../interfaces/IModels';
+import Conexion from '../classes/Conexion';
 
 export default class DocumentosAccess {
 
     private conexionTransaccional?: PoolConnection;
-    private readonly INSERT_DOCUMENTS = 'INSERT INTO documentos (doc_identificacion, doc_reg_fed_cont, doc_comprobante_domicilio) VALUES (?,?,?)';
+    
+    private readonly INSERT_DOCUMENTS = 'INSERT INTO documentos (doc_ide, doc_rfc, doc_dom) VALUES (?,?,?)';
 
     constructor(conexion?: PoolConnection) {
         this.conexionTransaccional = conexion;

@@ -1,4 +1,4 @@
-import { ISolicitud } from "../interfaces/IDominio";
+import { ISolicitud } from "../interfaces/IModels";
 
 export default class Solicitud implements ISolicitud {
 

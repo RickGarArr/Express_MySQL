@@ -20,7 +20,7 @@ export default class Conexion {
         });
 
         Conexion.pool.on('release', (conn: PoolConnection) => {
-            console.log('released: ', conn.threadId);
+            console.log('conexion released: ', conn.threadId);
         });
 
         return Conexion.pool;

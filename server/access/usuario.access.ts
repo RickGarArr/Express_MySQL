@@ -1,8 +1,8 @@
 import { PoolConnection } from 'mysql';
-import Usuario from '../dominio/Usuario';
+import Usuario from '../models/Usuario';
 import { insertPromise, queryPromise } from '../helpers/mysql.promisify';
-import { IUsuario } from '../interfaces/IDominio';
-import Conexion from '../server_classes/Conexion';
+import { IUsuario } from '../interfaces/IModels';
+import Conexion from '../classes/Conexion';
 
 export default class UsuarioAccess {
     
